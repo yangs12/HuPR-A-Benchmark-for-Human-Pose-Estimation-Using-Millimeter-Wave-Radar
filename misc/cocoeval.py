@@ -118,7 +118,7 @@ class COCOeval:
         self.evalImgs = defaultdict(list)   # per-image per-category evaluation results
         self.eval     = {}                  # accumulated evaluation results
 
-    def evaluate(self, idx_keypoint=-1):
+    def evaluate(self):
         '''
         Run per image evaluation on given images and store results (a list of dict) in self.evalImgs
         :return: None
@@ -145,7 +145,7 @@ class COCOeval:
             computeIoU = self.computeIoU
         elif p.iouType == 'keypoints':
             computeIoU = self.computeOks
-        self.ious = {(imgId, catId): computeIoU(imgId, catId, idx_keypoint) \
+        self.ious = {(imgId, catId): computeIoU(imgId, catId) \
                         for imgId in p.imgIds
                         for catId in catIds}
 
@@ -189,7 +189,7 @@ class COCOeval:
         ious = maskUtils.iou(d,g,iscrowd)
         return ious
 
-    def computeOks(self, imgId, catId, idx_keypoint=-1):
+    def computeOks(self, imgId, catId):
         p = self.params
         # dimention here should be Nxm
         gts = self._gts[imgId, catId]
@@ -229,9 +229,6 @@ class COCOeval:
                 e = (dx**2 + dy**2) / vars / (gt['area']+np.spacing(1)) / 2
                 if k1 > 0:
                     e=e[vg > 0]
-                # edited by shih-po lee, 07/29/2022
-                if idx_keypoint != -1:
-                    e = e[idx_keypoint:idx_keypoint+1]
                 ious[i, j] = np.sum(np.exp(-e)) / e.shape[0]
         return ious
 
@@ -523,9 +520,7 @@ class Params:
         self.areaRng = [[0 ** 2, 1e5 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
         self.areaRngLbl = ['all', 'medium', 'large']
         self.useCats = 1
-        #self.kpt_oks_sigmas = np.array([.26, .25, .25, .35, .35, .79, .79, .72, .72, .62,.62, 1.07, 1.07, .87, .87, .89, .89])/10.0
-        self.kpt_oks_sigmas = np.array([1.07, .87, .89, 1.07, .87, .89, 1., 1., .79, .72, .62, .79, .72, .62])/10.0
-        #self.kpt_oks_sigmas = np.array([1.07, .87, .89, 1.07, .87, .89, .5, .5, .79, .72, .62, .79, .72, .62])/10.0
+        self.kpt_oks_sigmas = np.array([.26, .25, .25, .35, .35, .79, .79, .72, .72, .62,.62, 1.07, 1.07, .87, .87, .89, .89])/10.0
 
     def __init__(self, iouType='segm'):
         if iouType == 'segm' or iouType == 'bbox':

@@ -196,7 +196,9 @@ class RadarObject():
                 print('%s, finished frame %d' % (self.radarDataFileNameGroup[idxName][0], idxFrame), end='\r')
     
     def loadDataPlot(self):
-        for idxName in range(len(self.radarDataFileNameGroup)):
+        # for idxName in range(len(self.radarDataFileNameGroup)):
+        # shu:
+        for idxName in range(11,21):
             with open(self.jointsFileNameGroup[idxName], "r") as fp:
                 annotGroup = json.load(fp)
             for idxFrame in range(0,self.numFrame):
