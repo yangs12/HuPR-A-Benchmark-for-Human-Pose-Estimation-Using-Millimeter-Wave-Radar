@@ -2,6 +2,7 @@
 ```
 conda create --name HuPR python=3.7.10
 conda activate HuPR
+pip install -r requirements_shubo.txt
 python setup.py
 ```
 Extract the dataset (`radar` folder is enough) in the 'preprocessing/raw_data/iwr1843'  (move in HuPR/)
