@@ -21,7 +21,9 @@ python process_iwr1843.py
 ```
 Note:
 - There are 276 sequences (named as `single_xx`), with each having 600 frames. The preprocessed data is stored in `data/HuPR/`
+- Remember to move `annotations/` folder in the data
 - The index of data folders to be preprocessed can be change in `for idxName in range()` in function `processRadarDataHoriVert()`
+- Range indexes [30,94], velocity indexes [24, 40]
 
 ## Training and Evaluation
 ```
@@ -38,5 +40,17 @@ Note:
 - The training batch size too large and results in out of GPU memory. I changed to batch size 5
 
 
+## For SMPLer-X mmdet
+```
+pip install -U openmim
+mim install mmengine
+mim install "mmcv>=2.0.0"
+mim install mmdet
+```
+
+### To verify
+```
+mim download mmdet --config rtmdet_tiny_8xb32-300e_coco --dest .
+```
 
 

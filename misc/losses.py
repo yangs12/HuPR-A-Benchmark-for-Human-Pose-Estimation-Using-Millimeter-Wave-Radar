@@ -18,7 +18,9 @@ class LossComputer():
         self.lossDecay = self.cfg.TRAINING.lossDecay
         self.alpha = 0.0
         self.beta = 1.0
+        # shu: 
         self.bce = nn.BCELoss()
+        self.bceLogits = nn.BCEWithLogitsLoss()
     
     def computeLoss(self, preds, gt):
         b = gt.size(0)
@@ -45,5 +47,9 @@ class LossComputer():
         return loss, loss2, pred2d, gt2d
 
     def computeBCESingleFrame(self, preds, gt):
-        loss = self.bce(preds, gt.to(self.device))
+        try:
+            loss = self.bce(preds, gt.to(self.device).float())
+        except:
+            
+            loss = self.bceLogits(preds, gt.to(self.device).float())
         return loss

@@ -32,6 +32,7 @@ class HuPR3D_horivert(BaseDataset):
         self.idxToJoints = cfg.DATASET.idxToJoints
         self.random = random
 
+        # shu: comment out the generating gt
         generateGTAnnot(cfg, phase)
         self.gtFile = os.path.join(self.dirRoot, '%s_gt.json' % phase)
         self.coco = COCO(self.gtFile)
@@ -118,28 +119,45 @@ class HuPR3D_horivert(BaseDataset):
             })
         return rec
     def __getitem__(self, index):
+        # print(index, self.random)
         if self.random:
             index = index * random.randint(1, self.sampling_ratio)
         else:
             index = index * self.sampling_ratio
         # collect past frames and furture frames for the center target frame
+
+        # which frame is this out of 600 frames, in the video
         padSize = index % self.duration
+
+        # 8 frames altogether, start with the index of the first frame, with the picked one in the middle
         idx = index - self.numGroupFrames//2 - 1
         
         VRDAEmaps_hori = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
         VRDAEmaps_vert = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
         
+        # index: the middle frame, idx: the current frame in the numGroupFrames loop
         for j in range(self.numGroupFrames):
+
+            # if the index is the first few frames, go to the first frame?
+            # if (j + padSize) <= 0: # previous: self.numGroupFrames//2:
             if (j + padSize) <= self.numGroupFrames//2:
                 idx = index - padSize
+            # previous: elif j > (self.duration - 1 - padSize) + self.numGroupFrames//2:
+            # elif (j + padSize) >= (self.duration - 1):
             elif j > (self.duration - 1 - padSize) + self.numGroupFrames//2:
                 idx = index + (self.duration - 1 - padSize)
             else:
                 idx += 1
             VRDAEPath_hori = self.VRDAEPaths_hori[idx]
             VRDAEPath_vert = self.VRDAEPaths_vert[idx]
-            VRDAERealImag_hori = np.load(VRDAEPath_hori)
-            VRDAERealImag_vert = np.load(VRDAEPath_vert)
+            # shu:
+            # print(self.VRDAEPaths_hori[idx])
+            VRDAERealImag_hori = np.load(VRDAEPath_hori, allow_pickle=True)
+            VRDAERealImag_vert = np.load(VRDAEPath_vert, allow_pickle=True)
+
+            # # shu:
+            # VRDAERealImag_hori = np.nan_to_num(VRDAERealImag_hori)
+            # VRDAERealImag_vert = np.nan_to_num(VRDAERealImag_vert)
 
             idxSampleChirps = 0
             for idxChirps in range(self.numChirps//2 - self.numFrames//2, self.numChirps//2 + self.numFrames//2):
@@ -148,6 +166,10 @@ class HuPR3D_horivert(BaseDataset):
                 VRDAEmaps_vert[j, idxSampleChirps, 0, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].real).permute(1, 2, 0)
                 VRDAEmaps_vert[j, idxSampleChirps, 1, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].imag).permute(1, 2, 0)
                 idxSampleChirps += 1
+        
+        # shu:
+        VRDAEmaps_hori = np.nan_to_num(VRDAEmaps_hori)
+        VRDAEmaps_vert = np.nan_to_num(VRDAEmaps_vert)
 
         joints = torch.LongTensor(self.annots[index]['joints'])
         bbox = torch.FloatTensor(self.annots[index]['bbox'])

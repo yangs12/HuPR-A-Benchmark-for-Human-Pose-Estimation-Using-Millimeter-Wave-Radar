@@ -17,7 +17,7 @@ class RadarObject():
         self.jointsFileNameGroup = []
         self.numADCSamples = 256
         self.adcRatio = 4
-        self.numAngleBins = self.numADCSamples//self.adcRatio
+        self.numAngleBins = self.numADCSamples//self.adcRatio  # ?? 64
         self.numEleBins = 8
         self.numRX = 4
         #self.numTX = 2
