@@ -8,6 +8,7 @@ from misc.logger import Logger
 import torch.utils.data as data
 import torch.nn.functional as F
 from misc.losses import LossComputer
+import wandb
 
 class BaseRunner():
     def __init__(self, args, cfg):
@@ -70,6 +71,7 @@ class BaseRunner():
         else:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] *= self.cfg.TRAINING.lrDecay
+        wandb.log({"learning rate": self.optimizer.param_groups[0]['lr']})
 
 
     def saveModelWeight(self, epoch, acc):
@@ -104,20 +106,25 @@ class BaseRunner():
             json.dump(loss_list, fp)
     
     def loadModelWeight(self, mode):
+        # shu:
+        self.args.pretrained = False
         checkpoint = os.path.join(self.dir, '%s.pth'%mode)
         if os.path.isdir(self.dir) and os.path.exists(checkpoint):
             checkpoint = torch.load(checkpoint)
             self.model.load_state_dict(checkpoint['model_state_dict'])
             if not self.args.eval:
-                if not self.args.pretrained: #self.args.pretrained_encoder:
+                # if not self.args.pretrained: #self.args.pretrained_encoder:
+                # shu:
+                if self.args.pretrained: #self.args.pretrained_encoder:
                     print('==========>Load the previous optimizer')
-                    self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                    self.start_epoch = checkpoint['epoch']
-                    self.logger.updateBestAcc(checkpoint['accuracy'])
+                    # self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                    # self.start_epoch = checkpoint['epoch']
+                    # self.logger.updateBestAcc(checkpoint['accuracy'])
                 else:
                     print('==========>Load a new optimizer')
                 
-            print('==========>Load the model weight from %s, saved at epoch %d' %(self.dir, checkpoint['epoch']))
+            # print('==========>Load the model weight from %s, saved at epoch %d' %(self.dir, checkpoint['epoch']))
+            print('==========>Train the model from scratch')
         else:
             print('==========>Train the model from scratch')
     

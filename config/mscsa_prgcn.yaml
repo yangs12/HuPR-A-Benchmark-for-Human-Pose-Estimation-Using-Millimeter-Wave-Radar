@@ -76,7 +76,7 @@ TRAINING:
     lossDecay: -1
     optimizer: "adam"
 TEST:
-    batchSize: 8 #32
+    batchSize: 4 #32
     plotImgDir: ''
 SETUP:
-    numWorkers: 8
+    numWorkers: 4

@@ -8,7 +8,7 @@ from datasets import getDataset
 import torch.utils.data as data
 import torch.nn.functional as F
 from tools.base import BaseRunner
-
+import wandb
 
 class Runner(BaseRunner):
     def __init__(self, args, cfg):
@@ -47,6 +47,7 @@ class Runner(BaseRunner):
                 preds = self.model(VRDAEmaps_hori, VRDAEmaps_vert)
                 loss, loss2, preds, gts = self.lossComputer.computeLoss(preds, keypoints)
                 self.logger.display(loss, loss2, keypoints.size(0), epoch)
+
                 if visualization:
                     plotHumanPose(preds*self.imgHeatmapRatio, self.cfg, 
                                   self.visDir, imageId, None)
@@ -56,6 +57,7 @@ class Runner(BaseRunner):
 
             self.saveKeypoints(savePreds, preds*self.imgHeatmapRatio, bbox, imageId)
             loss_list.append(loss.item())
+        wandb.log({"Eval total loss": np.mean(loss_list)})
         self.writeKeypoints(savePreds)
         if self.args.keypoints:
             accAP = self.testSet.evaluateEach(self.dir)
@@ -63,11 +65,17 @@ class Runner(BaseRunner):
         return accAP
 
     def train(self):
+        wandb.watch(self.model, log="all", log_freq=100)
         for epoch in range(self.start_epoch, self.cfg.TRAINING.epochs):
             self.model.train()
             loss_list = []
             self.logger.clear(len(self.trainLoader.dataset))
             for idxBatch, batch in enumerate(self.trainLoader):
+                
+                # shu: to quickly jump the training
+                # if idxBatch == 1:
+                #     break
+
                 self.optimizer.zero_grad()
                 keypoints = batch['jointsGroup']
                 bbox = batch['bbox']
@@ -75,6 +83,9 @@ class Runner(BaseRunner):
                 VRDAEmaps_vert = batch['VRDAEmap_vert'].float().to(self.device)
                 preds = self.model(VRDAEmaps_hori, VRDAEmaps_vert)
                 loss, loss2, _, _ = self.lossComputer.computeLoss(preds, keypoints)
+                
+                wandb.log({"Batch train total loss": loss, "Batch train loss2": loss2})
+
                 loss.backward()
                 self.optimizer.step()                    
                 self.logger.display(loss, loss2, keypoints.size(0), epoch)
@@ -84,3 +95,5 @@ class Runner(BaseRunner):
             accAP = self.eval(visualization=False, epoch=epoch)
             self.saveModelWeight(epoch, accAP)
             self.saveLosslist(epoch, loss_list, 'train')
+            
+            wandb.log({"Epoch train total loss": loss, "Epoch train loss2": loss2})

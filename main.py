@@ -3,6 +3,9 @@ import argparse
 from tools import Runner
 from collections import namedtuple
 
+import wandb
+wandb.login()
+
 
 class obj(object):
     def __init__(self, d):
@@ -31,6 +34,27 @@ if __name__ == "__main__":
     with open('./config/' + args.config, 'r') as f:
         cfg = yaml.safe_load(f)
         cfg = obj(cfg)
+    
+    # wandb
+    run_name = 'training-10epochs-0508'
+    wandb.init(
+        entity="nschuetz",
+        # Set the project where this run will be logged
+        project="mmWaveHPE", 
+        # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
+        name=f"experiment_{run_name}", 
+        # Track hyperparameters and run metadata
+        config={
+        "learning_rate": cfg.TRAINING.lr,
+        "epochs": cfg.TRAINING.epochs,
+        "batch_size": cfg.TRAINING.batchSize,
+        "warmup_epochs": cfg.TRAINING.warmupEpoch,
+        "test_bach_size": cfg.TEST.batchSize,
+        "num_workers": cfg.SETUP.numWorkers,
+        },
+        notes="HuPR. Training for replicating results",
+        )
+
     trigger = Runner(args, cfg)
     vis = False if args.visDir == 'none' else True
     if args.eval:
@@ -39,3 +63,4 @@ if __name__ == "__main__":
     else:
         trigger.loadModelWeight('checkpoint')
         trigger.train()
+
