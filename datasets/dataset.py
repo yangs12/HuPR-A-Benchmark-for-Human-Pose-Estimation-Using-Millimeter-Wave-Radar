@@ -32,8 +32,8 @@ class HuPR3D_horivert(BaseDataset):
         self.idxToJoints = cfg.DATASET.idxToJoints
         self.random = random
 
-        # shu: comment out the generating gt
-        generateGTAnnot(cfg, phase)
+        # # shu: comment out the generating gt
+        # generateGTAnnot(cfg, phase)
         self.gtFile = os.path.join(self.dirRoot, '%s_gt.json' % phase)
         self.coco = COCO(self.gtFile)
         self.imageIds = self.coco.getImgIds()
@@ -101,8 +101,9 @@ class HuPR3D_horivert(BaseDataset):
         objs = self.coco.loadAnns(annIds)
         rec = []
         for obj in objs:
-            joints_2d = np.zeros((self.numKeypoints, 2), dtype=np.float)
-            joints_2d_vis = np.zeros((self.numKeypoints, 2), dtype=np.float)
+            # shu: changed np.float into float
+            joints_2d = np.zeros((self.numKeypoints, 2), dtype=float)
+            joints_2d_vis = np.zeros((self.numKeypoints, 2), dtype=float)
             for ipt in range(self.numKeypoints):
                 joints_2d[ipt, 0] = obj['keypoints'][ipt * 3 + 0]
                 joints_2d[ipt, 1] = obj['keypoints'][ipt * 3 + 1]

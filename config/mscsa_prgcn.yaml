@@ -66,7 +66,7 @@ DATASET:
 MODEL:
     numFilters: 32
 TRAINING:
-    batchSize: 12 # 20
+    batchSize: 20 #20 
     epochs: 200
     lr: 0.0001
     warmupEpoch: -1
@@ -76,7 +76,7 @@ TRAINING:
     lossDecay: -1
     optimizer: "adam"
 TEST:
-    batchSize: 4 #32
+    batchSize: 32 #32
     plotImgDir: ''
 SETUP:
-    numWorkers: 4
+    numWorkers: 8 # 4

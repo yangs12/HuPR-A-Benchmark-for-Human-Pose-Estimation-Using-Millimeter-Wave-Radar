@@ -18,7 +18,6 @@ class LossComputer():
         self.lossDecay = self.cfg.TRAINING.lossDecay
         self.alpha = 0.0
         self.beta = 1.0
-        # shu: 
         self.bce = nn.BCELoss()
         self.bceLogits = nn.BCEWithLogitsLoss()
     
@@ -33,6 +32,8 @@ class LossComputer():
         preds, preds2 = preds      
         loss1 = self.computeBCESingleFrame(preds.view(-1, self.numKeypoints, self.height, self.width), heatmaps)
         preds = preds.permute(0, 2, 1, 3, 4).reshape(-1, self.numKeypoints, self.height, self.width)
+        
+        # print(preds2.shape, heatmaps.shape, preds2.view(-1, self.numKeypoints, self.height, self.width).shape)
         loss2 = self.computeBCESingleFrame(preds2.view(-1, self.numKeypoints, self.height, self.width), heatmaps)
         preds2 = preds2.permute(0, 2, 1, 3, 4).reshape(-1, self.numKeypoints, self.height, self.width)
         if self.alpha < 1.0:
@@ -47,9 +48,8 @@ class LossComputer():
         return loss, loss2, pred2d, gt2d
 
     def computeBCESingleFrame(self, preds, gt):
-        try:
-            loss = self.bce(preds, gt.to(self.device).float())
-        except:
-            
-            loss = self.bceLogits(preds, gt.to(self.device).float())
+        # print(preds.shape, gt.shape)   
+        # print('preds',np.max(preds.detach().cpu().numpy()), np.min(preds.detach().cpu().numpy()))
+        # print('gt',np.max(gt), np.min(gt))
+        loss = self.bce(preds, gt.to(self.device).float())
         return loss

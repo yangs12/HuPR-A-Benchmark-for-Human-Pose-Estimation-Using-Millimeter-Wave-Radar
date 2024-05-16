@@ -4,7 +4,12 @@ from tools import Runner
 from collections import namedtuple
 
 import wandb
-wandb.login()
+# wandb.login()
+
+# # solution from ChatGPT
+# import torch.multiprocessing as mp
+# print("multiprocessing")
+# mp.set_start_method('spawn', force=True)  # You can also try 'fork' or 'forkserver'
 
 
 class obj(object):
@@ -36,7 +41,7 @@ if __name__ == "__main__":
         cfg = obj(cfg)
     
     # wandb
-    run_name = 'training-10epochs-0508'
+    run_name = 'test-T4-Debug'
     wandb.init(
         entity="nschuetz",
         # Set the project where this run will be logged

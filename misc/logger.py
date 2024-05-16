@@ -8,9 +8,11 @@ class Logger():
         np.set_printoptions(precision=3)
     
     def clear(self, loaderSize):
+        # return 
         self.progressBar = tqdm(total=loaderSize)
         
     def display(self, loss, loss2, updateSize, epoch):
+        # return 
         if loss2 is not None:
             self.progressBar.set_postfix(EP=epoch, Loss=loss.item(), Loss2=loss2.item())
         else:
@@ -18,9 +20,11 @@ class Logger():
         self.progressBar.update(updateSize)
     
     def showBestAP(self):
+        # return 0
         return self.bestAP
     
     def isBestAccAP(self, acc):
+        # return True
         if acc > self.bestAP or self.bestAP == -1:
             self.bestAP = acc
             return True
