@@ -71,7 +71,7 @@ class BaseRunner():
         else:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] *= self.cfg.TRAINING.lrDecay
-        wandb.log({"learning rate": self.optimizer.param_groups[0]['lr']})
+        # wandb.log({"learning rate": self.optimizer.param_groups[0]['lr']})
 
 
     def saveModelWeight(self, epoch, acc):

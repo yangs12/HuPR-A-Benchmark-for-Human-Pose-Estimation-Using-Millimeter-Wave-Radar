@@ -10,6 +10,7 @@ import torch.utils.data as data
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from datasets.base import BaseDataset, generateGTAnnot
+import time
 
 def getDataset(phase, cfg, args, random=True):
     return HuPR3D_horivert(phase, cfg, args, random)
@@ -32,8 +33,8 @@ class HuPR3D_horivert(BaseDataset):
         self.idxToJoints = cfg.DATASET.idxToJoints
         self.random = random
 
-        # # shu: comment out the generating gt
-        # generateGTAnnot(cfg, phase)
+        # shu: comment out the generating gt
+        generateGTAnnot(cfg, phase)
         self.gtFile = os.path.join(self.dirRoot, '%s_gt.json' % phase)
         self.coco = COCO(self.gtFile)
         self.imageIds = self.coco.getImgIds()
@@ -120,11 +121,13 @@ class HuPR3D_horivert(BaseDataset):
             })
         return rec
     def __getitem__(self, index):
-        # print(index, self.random)
+        # start_item = time.time()
+
         if self.random:
             index = index * random.randint(1, self.sampling_ratio)
         else:
             index = index * self.sampling_ratio
+
         # collect past frames and furture frames for the center target frame
 
         # which frame is this out of 600 frames, in the video
@@ -136,8 +139,12 @@ class HuPR3D_horivert(BaseDataset):
         VRDAEmaps_hori = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
         VRDAEmaps_vert = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
         
+        # before_loop = time.time()
+        # print('before loop', before_loop - start_item)
+
         # index: the middle frame, idx: the current frame in the numGroupFrames loop
         for j in range(self.numGroupFrames):
+            start_frame_loop = time.time()
 
             # if the index is the first few frames, go to the first frame?
             # if (j + padSize) <= 0: # previous: self.numGroupFrames//2:
@@ -155,26 +162,34 @@ class HuPR3D_horivert(BaseDataset):
             # print(self.VRDAEPaths_hori[idx])
             VRDAERealImag_hori = np.load(VRDAEPath_hori, allow_pickle=True)
             VRDAERealImag_vert = np.load(VRDAEPath_vert, allow_pickle=True)
+            # load_file = time.time()
+            # print('load file', load_file - start_frame_loop)
 
-            # # shu:
-            # VRDAERealImag_hori = np.nan_to_num(VRDAERealImag_hori)
-            # VRDAERealImag_vert = np.nan_to_num(VRDAERealImag_vert)
+            # print('loaded shape', VRDAERealImag_hori.shape) # loaded shape (16, 64, 64, 8)
 
             idxSampleChirps = 0
             for idxChirps in range(self.numChirps//2 - self.numFrames//2, self.numChirps//2 + self.numFrames//2):
+                # 8 - 4, 8 + 4, only take center part chirps
                 VRDAEmaps_hori[j, idxSampleChirps, 0, :, :, :] = self.transformFunc(VRDAERealImag_hori[idxChirps].real).permute(1, 2, 0)
                 VRDAEmaps_hori[j, idxSampleChirps, 1, :, :, :] = self.transformFunc(VRDAERealImag_hori[idxChirps].imag).permute(1, 2, 0)
                 VRDAEmaps_vert[j, idxSampleChirps, 0, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].real).permute(1, 2, 0)
                 VRDAEmaps_vert[j, idxSampleChirps, 1, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].imag).permute(1, 2, 0)
                 idxSampleChirps += 1
-        
-        # shu:
+            # # print('VRDAEmaps_hori shape', VRDAEmaps_hori.shape) # VRDAEmaps_hori shape torch.Size([8, 8, 2, 64, 64, 8])
+            # after_2_loop = time.time()
+            # print('Loop 2', after_2_loop - load_file)
+
+        # shu: maybe the transform has a nan?
         VRDAEmaps_hori = np.nan_to_num(VRDAEmaps_hori)
         VRDAEmaps_vert = np.nan_to_num(VRDAEmaps_vert)
 
         joints = torch.LongTensor(self.annots[index]['joints'])
         bbox = torch.FloatTensor(self.annots[index]['bbox'])
         imageId = self.annots[index]['imageId']
+        
+        # end_item = time.time()
+        # print('end item', end_item - start_item)
+
         return {'VRDAEmap_hori': VRDAEmaps_hori,
                 'VRDAEmap_vert': VRDAEmaps_vert,
                 'imageId': imageId,
