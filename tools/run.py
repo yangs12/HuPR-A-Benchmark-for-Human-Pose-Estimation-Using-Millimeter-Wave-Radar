@@ -67,6 +67,7 @@ class Runner(BaseRunner):
             with torch.no_grad():
                 VRDAEmaps_hori = batch['VRDAEmap_hori'].float().to(self.device)
                 VRDAEmaps_vert = batch['VRDAEmap_vert'].float().to(self.device)
+
                 # logging.debug("Predicting")
                 preds = self.model(VRDAEmaps_hori, VRDAEmaps_vert)
                 # logging.debug("Calculating loss")
@@ -100,10 +101,10 @@ class Runner(BaseRunner):
             loss_list = []
             self.logger.clear(len(self.trainLoader.dataset))
 
-            # start_load = time.time()
+            start_load = time.time()
             for idxBatch, batch in enumerate(self.trainLoader):
-                # after_load = time.time()
-                # print('\nloading time',  after_load - start_load)
+                after_load = time.time()
+                print('\nloading time',  after_load - start_load)
 
                 # logging.debug(f"Batch idxBatch: {idxBatch}")
                 # # # shu: to quickly jump the training
@@ -116,6 +117,7 @@ class Runner(BaseRunner):
                 bbox = batch['bbox']
                 VRDAEmaps_hori = batch['VRDAEmap_hori'].float().to(self.device)
                 VRDAEmaps_vert = batch['VRDAEmap_vert'].float().to(self.device)
+                # print('torch in run', torch.is_tensor(VRDAEmaps_hori))
                 
                 # logging.debug("pred model")
 
@@ -136,12 +138,8 @@ class Runner(BaseRunner):
                 # after_train= time.time()
                 # print('\ntraining time',  after_train - after_load)
             
-            # # logging.debug(f"Epoch {epoch} finished, begin eval")
             # accAP = self.eval(visualization=False, epoch=epoch)
-            # # logging.debug(f"Epoch {epoch} eval finished")
             # self.saveModelWeight(epoch, accAP)
-            # # logging.debug(f"Epoch {epoch} model saved")
             # self.saveLosslist(epoch, loss_list, 'train')
-            # # logging.debug(f"Epoch {epoch} losslist saved")
                 
             # # wandb.log({"Epoch train total loss": loss, "Epoch train loss2": loss2})

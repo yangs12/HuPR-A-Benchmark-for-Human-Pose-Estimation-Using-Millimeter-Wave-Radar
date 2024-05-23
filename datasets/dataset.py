@@ -11,6 +11,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from datasets.base import BaseDataset, generateGTAnnot
 import time
+import h5py
 
 def getDataset(phase, cfg, args, random=True):
     return HuPR3D_horivert(phase, cfg, args, random)
@@ -33,17 +34,19 @@ class HuPR3D_horivert(BaseDataset):
         self.idxToJoints = cfg.DATASET.idxToJoints
         self.random = random
 
-        # shu: comment out the generating gt
-        generateGTAnnot(cfg, phase)
+        # # shu: comment out the generating gt
+        # generateGTAnnot(cfg, phase)
         self.gtFile = os.path.join(self.dirRoot, '%s_gt.json' % phase)
         self.coco = COCO(self.gtFile)
         self.imageIds = self.coco.getImgIds()
-        self.VRDAEPaths_hori = []
-        self.VRDAEPaths_vert = []
+        self.VRDAEPaths = []
+        # self.VRDAEPaths_vert = []
         for name in self.imageIds:
             namestr = '%09d' % name
-            self.VRDAEPaths_hori.append(os.path.join(self.dirRoot, 'single_%d/hori/%09d.npy'%(int(namestr[:4]), int(namestr[-4:]))))
-            self.VRDAEPaths_vert.append(os.path.join(self.dirRoot, 'single_%d/vert/%09d.npy'%(int(namestr[:4]), int(namestr[-4:]))))
+            self.VRDAEPaths.append(os.path.join(self.dirRoot, 'single_%d/%09d.npy'%(int(namestr[:4]), int(namestr[-4:]))))
+            # self.VRDAEPaths_hori.append(os.path.join(self.dirRoot, 'single_%d/hori/%09d.npy'%(int(namestr[:4]), int(namestr[-4:]))))
+            # self.VRDAEPaths_vert.append(os.path.join(self.dirRoot, 'single_%d/vert/%09d.npy'%(int(namestr[:4]), int(namestr[-4:]))))
+        print('VRDAEPaths length', len(self.VRDAEPaths))
         self.annots = self._load_coco_keypoint_annotations()
         self.transformFunc = self.getTransformFunc(cfg)
 
@@ -127,61 +130,13 @@ class HuPR3D_horivert(BaseDataset):
             index = index * random.randint(1, self.sampling_ratio)
         else:
             index = index * self.sampling_ratio
+        # index = 5
 
-        # collect past frames and furture frames for the center target frame
-
-        # which frame is this out of 600 frames, in the video
-        padSize = index % self.duration
-
-        # 8 frames altogether, start with the index of the first frame, with the picked one in the middle
-        idx = index - self.numGroupFrames//2 - 1
-        
-        VRDAEmaps_hori = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
-        VRDAEmaps_vert = torch.zeros((self.numGroupFrames, self.numFrames, 2, self.r, self.w, self.h))
-        
-        # before_loop = time.time()
-        # print('before loop', before_loop - start_item)
-
-        # index: the middle frame, idx: the current frame in the numGroupFrames loop
-        for j in range(self.numGroupFrames):
-            start_frame_loop = time.time()
-
-            # if the index is the first few frames, go to the first frame?
-            # if (j + padSize) <= 0: # previous: self.numGroupFrames//2:
-            if (j + padSize) <= self.numGroupFrames//2:
-                idx = index - padSize
-            # previous: elif j > (self.duration - 1 - padSize) + self.numGroupFrames//2:
-            # elif (j + padSize) >= (self.duration - 1):
-            elif j > (self.duration - 1 - padSize) + self.numGroupFrames//2:
-                idx = index + (self.duration - 1 - padSize)
-            else:
-                idx += 1
-            VRDAEPath_hori = self.VRDAEPaths_hori[idx]
-            VRDAEPath_vert = self.VRDAEPaths_vert[idx]
-            # shu:
-            # print(self.VRDAEPaths_hori[idx])
-            VRDAERealImag_hori = np.load(VRDAEPath_hori, allow_pickle=True)
-            VRDAERealImag_vert = np.load(VRDAEPath_vert, allow_pickle=True)
-            # load_file = time.time()
-            # print('load file', load_file - start_frame_loop)
-
-            # print('loaded shape', VRDAERealImag_hori.shape) # loaded shape (16, 64, 64, 8)
-
-            idxSampleChirps = 0
-            for idxChirps in range(self.numChirps//2 - self.numFrames//2, self.numChirps//2 + self.numFrames//2):
-                # 8 - 4, 8 + 4, only take center part chirps
-                VRDAEmaps_hori[j, idxSampleChirps, 0, :, :, :] = self.transformFunc(VRDAERealImag_hori[idxChirps].real).permute(1, 2, 0)
-                VRDAEmaps_hori[j, idxSampleChirps, 1, :, :, :] = self.transformFunc(VRDAERealImag_hori[idxChirps].imag).permute(1, 2, 0)
-                VRDAEmaps_vert[j, idxSampleChirps, 0, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].real).permute(1, 2, 0)
-                VRDAEmaps_vert[j, idxSampleChirps, 1, :, :, :] = self.transformFunc(VRDAERealImag_vert[idxChirps].imag).permute(1, 2, 0)
-                idxSampleChirps += 1
-            # # print('VRDAEmaps_hori shape', VRDAEmaps_hori.shape) # VRDAEmaps_hori shape torch.Size([8, 8, 2, 64, 64, 8])
-            # after_2_loop = time.time()
-            # print('Loop 2', after_2_loop - load_file)
-
-        # shu: maybe the transform has a nan?
-        VRDAEmaps_hori = np.nan_to_num(VRDAEmaps_hori)
-        VRDAEmaps_vert = np.nan_to_num(VRDAEmaps_vert)
+        path = self.VRDAEPaths[index]
+        # print('is torch', torch.is_tensor(VRDAEmaps_hori))
+        file = np.load(path, allow_pickle=True)
+        VRDAEmaps_hori = file.item().get('hori')
+        VRDAEmaps_vert = file.item().get('vert')
 
         joints = torch.LongTensor(self.annots[index]['joints'])
         bbox = torch.FloatTensor(self.annots[index]['bbox'])
@@ -197,4 +152,4 @@ class HuPR3D_horivert(BaseDataset):
                 'bbox': bbox}
     
     def __len__(self):
-        return len(self.VRDAEPaths_hori)//self.sampling_ratio
+        return len(self.VRDAEPaths)//self.sampling_ratio
