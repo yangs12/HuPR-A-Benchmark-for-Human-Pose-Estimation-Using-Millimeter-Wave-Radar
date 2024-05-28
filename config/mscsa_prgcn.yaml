@@ -10,7 +10,7 @@ DATASET:
     numFrames: 8 # num of chirps in one frame to be processed
     numGroupFrames: 8 # num of frames to be processed
     numChirps: 16 # num of chirps captured by radar sensors, should always be 16
-    dataDir: '../jupyter/hupr/net_preprocessed/'
+    dataDir: '/mnt/ssd/net_preprocessed/'
     # net_preprocessed/
     # radar_processed/
     # 'data/HuPR' #'../radar_skeleton_estimation_iwr1843/data/20220623'
@@ -49,7 +49,7 @@ DATASET:
 MODEL:
     numFilters: 32
 TRAINING:
-    batchSize: 8 #20 #20 
+    batchSize: 10 #8 #20 #20 
     epochs: 1 #200
     lr: 0.0001
     warmupEpoch: -1

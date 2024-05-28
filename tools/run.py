@@ -138,8 +138,8 @@ class Runner(BaseRunner):
                 # after_train= time.time()
                 # print('\ntraining time',  after_train - after_load)
             
-            # accAP = self.eval(visualization=False, epoch=epoch)
-            # self.saveModelWeight(epoch, accAP)
-            # self.saveLosslist(epoch, loss_list, 'train')
+            accAP = self.eval(visualization=False, epoch=epoch)
+            self.saveModelWeight(epoch, accAP)
+            self.saveLosslist(epoch, loss_list, 'train')
                 
             # # wandb.log({"Epoch train total loss": loss, "Epoch train loss2": loss2})
