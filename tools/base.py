@@ -13,6 +13,8 @@ import wandb
 class BaseRunner():
     def __init__(self, args, cfg):
         self.device = 'cuda' if torch.cuda.is_available() and args.gpuIDs else 'cpu'
+        # print('==========>Device:', self.device)
+        # self.device = torch.device("cuda:0,1" if torch.cuda.is_available() else "cpu") ## GPU id's start from 0.
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
@@ -109,24 +111,24 @@ class BaseRunner():
         # shu:
         self.args.pretrained = False
         checkpoint = os.path.join(self.dir, '%s.pth'%mode)
-        if os.path.isdir(self.dir) and os.path.exists(checkpoint):
-            checkpoint = torch.load(checkpoint)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            if not self.args.eval:
-                # if not self.args.pretrained: #self.args.pretrained_encoder:
-                # shu:
-                if self.args.pretrained: #self.args.pretrained_encoder:
-                    print('==========>Load the previous optimizer')
-                    # self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                    # self.start_epoch = checkpoint['epoch']
-                    # self.logger.updateBestAcc(checkpoint['accuracy'])
-                else:
-                    print('==========>Load a new optimizer')
+        # if os.path.isdir(self.dir) and os.path.exists(checkpoint):
+        #     # checkpoint = torch.load(checkpoint)
+        #     # self.model.load_state_dict(checkpoint['model_state_dict'])
+        #     if not self.args.eval:
+        #         # if not self.args.pretrained: #self.args.pretrained_encoder:
+        #         # shu:
+        #         if self.args.pretrained: #self.args.pretrained_encoder:
+        #             print('==========>Load the previous optimizer')
+        #             # self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        #             # self.start_epoch = checkpoint['epoch']
+        #             # self.logger.updateBestAcc(checkpoint['accuracy'])
+        #         else:
+        #             print('==========>Load a new optimizer')
                 
-            # print('==========>Load the model weight from %s, saved at epoch %d' %(self.dir, checkpoint['epoch']))
-            print('==========>Train the model from scratch')
-        else:
-            print('==========>Train the model from scratch')
+        #     # print('==========>Load the model weight from %s, saved at epoch %d' %(self.dir, checkpoint['epoch']))
+        #     print('==========>Train the model from scratch')
+        # else:
+        print('==========>Train the model from scratch')
     
     def saveKeypoints(self, savePreds, preds, bbox, image_id, predHeatmap=None):
         

@@ -93,7 +93,6 @@ class MultiScaleCrossSelfAttentionPRGCN(nn.Module):
             BasicBlock2D(self.numFilters*2, self.numFilters, 3, 1, 1, batchnorm, activation),
             nn.Conv2d(self.numFilters, self.numKeypoints, 1, 1, 0, bias=False),
         )
-
         A = torch.tensor([
             [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],#RHip
             [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],#RKnee
@@ -109,7 +108,7 @@ class MultiScaleCrossSelfAttentionPRGCN(nn.Module):
             [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0],#RShoulder
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],#RElbow
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]#RWrist
-        ], dtype=torch.float).cuda()
+        ], dtype=torch.float)# shu: for multiple GPU: .to(self.device) #.cuda()
         self.gcn = PRGCN(cfg, A)
 
         filterList = [self.numFilters*8, self.numFilters*4, self.numFilters*2]

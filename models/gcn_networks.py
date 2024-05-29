@@ -52,6 +52,8 @@ class PRGCN(nn.Module):
 
     def gcn_forward(self, x):
         #x: (B, numFilters, numkeypoints)
+        # shu: make sure all new variables are in the same GPU device! not just cuda
+        self.A = self.A.to(x.device)
         x2 = self.relu(self.L1(x, self.A))
         x3 = self.relu(self.L2(x2, self.A))
         keypoints = self.L3(x3, self.A)

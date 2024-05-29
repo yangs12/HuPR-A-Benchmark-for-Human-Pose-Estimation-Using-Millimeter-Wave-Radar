@@ -24,9 +24,9 @@ class HuPRNet(nn.Module):
     # VRDAEmaps_hori, VRDAEmaps_vert):
         # batchSize = VRDAEmaps_hori.size(0)
         batchSize = VRDAmaps_hori.size(0)
-        # # # Shrink elevation dimension
-        # VRDAmaps_hori = VRDAmaps_hori.mean(dim=6) # VRDAEmaps_hori
-        # VRDAmaps_vert = VRDAmaps_vert.mean(dim=6) # VRDAEmaps_vert
+        # # Shrink elevation dimension
+        VRDAmaps_hori = VRDAmaps_hori.mean(dim=6) # VRDAEmaps_hori
+        VRDAmaps_vert = VRDAmaps_vert.mean(dim=6) # VRDAEmaps_vert
         
         # np.save('hupr_data_test/VRDAmaps_hori_single15_599.npy', VRDAmaps_hori.cpu().detach().numpy())
         # np.save('hupr_data_test/VRDAmaps_vert_single15_599.npy', VRDAmaps_vert.cpu().detach().numpy())
